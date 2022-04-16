@@ -23,13 +23,21 @@ def runBrowser():
     gameIcon.click()
     wholeBoard = gameAppContents.find_element(By.ID, "board")
     rows = wholeBoard.find_elements(By.TAG_NAME, "game-row")
-    row1 = rows[0]
-    tile = rows[0].shadow_root.findElement(By.CLASS_NAME, "tile")
-    tile.clear()
-    tile.send_keys("r")
-    tile.send_keys(Keys.TAB)
-    assert "No results found." not in driver.page_source
+    row1 = rows[0].shadow_root
+    typeLetter(gameAppContents, "c")
+    typeLetter(gameAppContents, "r")
+    typeLetter(gameAppContents, "a")
+    typeLetter(gameAppContents, "n")
+    typeLetter(gameAppContents, "e")
+    time.sleep(2)
+    #assert "No results found." not in driver.page_source
     driver.close()
+
+def typeLetter(gameAppContents, letter):
+    keyboardContent = gameAppContents.find_element(By.TAG_NAME, "game-keyboard").shadow_root
+    buttonName = 'button[data-key="%s"]' % letter
+    buttonA = keyboardContent.find_element(By.CSS_SELECTOR, buttonName)
+    buttonA.click()
 
 if __name__ == '__main__':
     getFullWordList()
