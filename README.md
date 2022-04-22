@@ -5,7 +5,7 @@ A tool to automatically run Wordle. It automates the browser, simulating the cli
 
 ## Method
 
-It's better than random, but not the most optimal. The method of guessing is:
+It's much better than random, but not fully optimal. The method of guessing is:
 
  - Guess an initial word (happens to be an answer from a while ago I generally use)
  - Check the result, and remove all non-matching words from the remaining possible words list
