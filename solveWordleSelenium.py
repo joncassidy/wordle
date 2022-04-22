@@ -69,7 +69,7 @@ class WordleController:
         print(len(self.possibleWords), "words left")
 
     def getBestGuess(self):
-        minRemaining = len(self.possibleWords)+1
+        minRemaining = (len(self.possibleWords))**2
         bestNextGuess = ''
         for nextGuess in self.possibleWords:
             wordsRemaining = 0
