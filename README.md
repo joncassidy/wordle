@@ -26,4 +26,4 @@ The strategy above assume the harder mode, where only guesses matching previous 
 ## Technology
 - I wanted to make it easier to run, but the site seems fairly solid on preventing cross site, and so I couldn't think of a way to do it just in a browser. But I didn't want to retype all of the answers into something else. Hence Python (because it's easier) and selenium.
 - The Wordle site is a little bit painful with lots of shadow-root stuff. It's GDPR popups are also a bit of a hack to deal with.
-- I'm thinking about an approach of pre-calculating the expected result for each combination of guess and actual word. (I think a result can fit in a byte)
+- I'm thinking about an approach of pre-calculating the expected result for each combination of guess and actual word. (I think a result can fit in a byte as 3^5 < 2^8). So that might be an index for each possible result of about 5 million entries. Checking a guess/word combination is then a lookup plas a 1 byte compare. 
