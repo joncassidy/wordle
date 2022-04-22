@@ -10,10 +10,9 @@ It's much better than random, but not fully optimal. The method of guessing is:
  - Guess an initial word (happens to be an answer from a while ago I generally use)
  - Check the result, and remove all non-matching words from the remaining possible words list
  - To find the 'best' next guess
- -- Consider each next guessed word
- -- Try each combination of a word to guess next, and what the actual answer might be
- -- For each guess, find the average number of words left across all possible answers (strictly uses the total rather than the average)
- -- Use the word with the lowest average, ie the word which on average will leave the fewest remaining words after that guess
+     - Try each combination of a word to guess next, and what the actual answer might be
+     - For each guess, find the average number of words left across all possible answers (strictly uses the total rather than the average)
+     - Use the word with the lowest average, ie the word which on average will leave the fewest remaining words after that guess
  
 The strategy above assume the harder mode, where only guesses matching previous results are allowed, and targets best average results rather than avoiding bad results.
 
