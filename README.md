@@ -20,4 +20,10 @@ The strategy above assume the harder mode, where only guesses matching previous 
 ## Improvements
  - At the moment, there is a wait for Wordle to update the results. I should change this to seeing that the last tile has turned (or the keyboard event listener is back on)
  - It's inefficient. Not so bad as there are a limited number of words, but I think the strategy is probably O(n<sup>3</sup>), with n=remaining words (combination of next word, actual word and each still allowed). I'm wondering about pre-computing a 'score' for combinations which might do better than O(n<sup>2</sup>)
- - I assume all words left are equally hard to distinguish. This isn't true, so a better information based strategy would do better (like the Wordle bot uses)
+ - I've assumed all words left are equally hard to distinguish. This isn't true, so a better information based strategy would do better (like the Wordle bot uses)
+ - Set a cookie before starting to supress the GDPR cookies, as that is a bti messy at the moment to close them
+
+## Technology
+- I wanted to make it easier to run, but the site seems fairly solid on preventing cross site, and so I couldn't think of a way to do it just in a browser. But I didn't want to retype all of the answers into something else. Hence Python (because it's easier) and selenium.
+- The Wordle site is a little bit painful with lots of shadow-root stuff. It's GDPR popups are also a bit of a hack to deal with.
+- I'm thinking about an approach of pre-calculating the expected result for each combination of guess and actual word. (I think a result can fit in a byte)
