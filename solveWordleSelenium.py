@@ -42,7 +42,7 @@ class WordleController:
         gdprPopup = self.driver.find_element(By.CLASS_NAME, "pz-snackbar")
         self.driver.execute_script("arguments[0].style.display = 'none';", gdprPopup)
 
-        self.haveGuess("moist")
+        self.haveGuess("plant")
         self.haveGuess(self.getBestGuess())
         self.haveGuess(self.getBestGuess())
         self.haveGuess(self.getBestGuess())
@@ -69,7 +69,7 @@ class WordleController:
         print(len(self.possibleWords), "words left")
 
     def getBestGuess(self):
-        minRemaining = (len(self.possibleWords))**2
+        minRemaining = (len(self.possibleWords)+1)**2
         bestNextGuess = ''
         for nextGuess in self.possibleWords:
             wordsRemaining = 0
@@ -105,7 +105,24 @@ class WordleController:
     def test(self):
         self.currentWord = 'colon'
         self.currentWordStatus = ['absent', 'present','absent', 'absent', 'absent']
-        print(self.wordIsAllowed('oxide'))
+        print(self.wordIsAllowed('plant'))
+
+    def tryAllWords(self):
+        possibleWords = self.possibleWords
+        for targetWord in possibleWords:
+            found = False
+            i = 0
+            while not(found):
+                currentGuess = "moist"
+                for i in range(5):
+                    currentGuessStatus = checkWord(targetWord,currentGuess)
+                    if (all([s == 'correct' for s in currentGuessStatus])):
+                        found = True
+                        print(targetWord + "found in " + i + "guesses")
+                    else:
+                        remainingPossibleWords = [w for w in possibleWords if wordIsAllowed(w, currentGuess, currentGuessStatus)]
+                        possibleWords = remainingPossibleWords
+                print(len(possibleWords), "words left")
 
 def checkWord(answer, guess):
     result = ['','','','','']
@@ -150,4 +167,5 @@ def wordIsAllowed(targetWord, guess, guessResult):
 if __name__ == '__main__':
     getFullWordList()
     wordle = WordleController()
+    #wordle.tryAllWords()
     wordle.runBrowser()
