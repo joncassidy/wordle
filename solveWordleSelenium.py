@@ -1,16 +1,22 @@
 import json
 import time
+#import multiprocessing as mp
 import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import Keys, ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
 # To Do:
 # Check when a key can be pressed again (based on event listener on keys?) rather than waiting
-# Work out best next word based on number then left
+
+ABSENT = 'a'
+PRESENT = 'p'
+CORRECT = 'c'
 
 fullWordList = []
+#pool = mp.Pool(mp.cpu_count())
 
 def getFullWordList():
     global fullWordList
@@ -25,41 +31,49 @@ class WordleController:
 
     def runBrowser(self):
         self.driver = webdriver.Chrome()
+        wait=WebDriverWait(self.driver,5)
         #self.driver.get("https://www.nytimes.com/dummyAddress")
         #self.driver.add_cookie({"name": "nyt-gdpr", "value": "0", "domain":".nytimes.com", "path":"/"})
         self.driver.get("https://www.nytimes.com/games/wordle/index.html")
         assert "Wordle" in self.driver.title
-        self.driver.find_element(By.ID, "pz-gdpr-btn-accept").click()
-
-        self.gameAppContents = self.driver.find_element(By.TAG_NAME, "game-app").shadow_root
-        self.keyboardContent = self.gameAppContents.find_element(By.TAG_NAME, "game-keyboard").shadow_root
-        gameModalContents = self.gameAppContents.find_element(By.TAG_NAME, "game-modal").shadow_root
-        gameIcon = gameModalContents.find_element(By.TAG_NAME, "game-icon")
-        gameIcon.click()
+        element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "fides-accept-all-button")))
+        self.driver.find_element(By.CLASS_NAME, "fides-accept-all-button").click()
+        element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='Play']")))
+        self.driver.find_element(By.CSS_SELECTOR, "[data-testid='Play']").click()
+        element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-label='Close']")))
+        self.driver.find_element(By.CSS_SELECTOR, "[aria-label='Close']").click()
+        time.sleep(1)
+        #self.gameAppContents = self.driver.find_element(By.TAG_NAME, "game-app").shadow_root
+        #self.keyboardContent = self.gameAppContents.find_element(By.TAG_NAME, "game-keyboard").shadow_root
+        #gameModalContents = self.gameAppContents.find_element(By.TAG_NAME, "game-modal").shadow_root
+        #gameIcon = gameModalContents.find_element(By.TAG_NAME, "game-icon")
+        #gameIcon.click()
 
         time.sleep(1)
         self.driver.execute_script("console.log('here')")
-        gdprPopup = self.driver.find_element(By.CLASS_NAME, "pz-snackbar")
-        self.driver.execute_script("arguments[0].style.display = 'none';", gdprPopup)
+#        gdprPopup = self.driver.find_element(By.CLASS_NAME, "pz-snackbar")
+#        self.driver.execute_script("arguments[0].style.display = 'none';", gdprPopup)
 
-        self.haveGuess("plant")
-        self.haveGuess(self.getBestGuess())
-        self.haveGuess(self.getBestGuess())
-        self.haveGuess(self.getBestGuess())
-        self.haveGuess(self.getBestGuess())
-        self.haveGuess(self.getBestGuess())
+        self.haveGuess("moist")
+        self.haveGuess(getBestGuess(self.possibleWords))
+        self.haveGuess(getBestGuess(self.possibleWords))
+        self.haveGuess(getBestGuess(self.possibleWords))
+        self.haveGuess(getBestGuess(self.possibleWords))
+        self.haveGuess(getBestGuess(self.possibleWords))
         #self.haveGuess(random.choice(self.possibleWords))
 
     def haveGuess(self, word):
         #self.wait_for_element(tile % "5" + '::shadow [data-state*="e"]')
         self.currentRow+=1
-        for i in range(5):
-            self.typeLetter(word[i])
-        self.typeLetter("\n")
+        #for i in range(5):
+        #    self.typeLetter(word[i])
+        #self.typeLetter("\n")
+        ActionChains(self.driver).send_keys(word).perform()
+        ActionChains(self.driver).send_keys(Keys.RETURN).perform()
         time.sleep(2)
         self.currentWord = word
         self.currentWordStatus = self.getCurrentStatus()
-        if (all([s=='correct' for s in self.currentWordStatus])):
+        if (all([s==CORRECT for s in self.currentWordStatus])):
             print("Word is "+word)
             time.sleep(5)
             self.driver.close()
@@ -68,19 +82,6 @@ class WordleController:
             self.updatePossibleWords()
         print(len(self.possibleWords), "words left")
 
-    def getBestGuess(self):
-        minRemaining = (len(self.possibleWords)+1)**2
-        bestNextGuess = ''
-        for nextGuess in self.possibleWords:
-            wordsRemaining = 0
-            for actualAnswer in self.possibleWords:
-#            remainingPossibleWords = [w for w in self.possibleWords if wordIsAllowed(w, self.currentWord, self.currentWordStatus)]
-                wordsRemaining += sum(map(lambda x : wordIsAllowed(x, nextGuess, checkWord(actualAnswer, nextGuess)), self.possibleWords))
-            if wordsRemaining < minRemaining:
-                minRemaining = wordsRemaining
-                bestNextGuess = nextGuess
-        print("Best guess", bestNextGuess)
-        return bestNextGuess
 
     def updatePossibleWords(self):
         remainingPossibleWords = [w for w in self.possibleWords if wordIsAllowed(w, self.currentWord, self.currentWordStatus)]
@@ -99,68 +100,85 @@ class WordleController:
         allRows = themeManager.find_elements(By.TAG_NAME, "game-row")
         thisRowRoot = allRows[self.currentRow].shadow_root
         thisRowTiles = thisRowRoot.find_elements(By.TAG_NAME, "game-tile")
-        status = [tile.get_attribute("evaluation") for tile in thisRowTiles]
+        status = [tile.get_attribute("evaluation")[0] for tile in thisRowTiles]
         return status
 
     def test(self):
         self.currentWord = 'colon'
-        self.currentWordStatus = ['absent', 'present','absent', 'absent', 'absent']
+        self.currentWordStatus = [ABSENT, PRESENT, ABSENT, ABSENT, ABSENT]
         print(self.wordIsAllowed('plant'))
 
     def tryAllWords(self):
         possibleWords = self.possibleWords
-        for targetWord in possibleWords:
+        for targetWord in self.possibleWords:
             found = False
+            currentGuess = "moist"
             i = 0
             while not(found):
-                currentGuess = "moist"
-                for i in range(5):
-                    currentGuessStatus = checkWord(targetWord,currentGuess)
-                    if (all([s == 'correct' for s in currentGuessStatus])):
-                        found = True
-                        print(targetWord + "found in " + i + "guesses")
-                    else:
-                        remainingPossibleWords = [w for w in possibleWords if wordIsAllowed(w, currentGuess, currentGuessStatus)]
-                        possibleWords = remainingPossibleWords
-                print(len(possibleWords), "words left")
+                currentGuessStatus = checkWord(targetWord,currentGuess)
+                if (all([s == CORRECT for s in currentGuessStatus])):
+                    found = True
+                    print(targetWord + " found in " + str(i) + " guesses")
+                else:
+                    remainingPossibleWords = [w for w in possibleWords if wordIsAllowed(w, currentGuess, currentGuessStatus)]
+                currentGuess = getBestGuess(remainingPossibleWords)
+                i+=1
+
+def getBestGuess(possibleWords):
+    minRemaining = (len(possibleWords)+1)**2
+    bestNextGuess = ''
+    for nextGuess in possibleWords:
+        wordsRemaining = 0
+        for actualAnswer in possibleWords:
+            wordsRemaining += sum(map(lambda x : wordIsAllowed(x, nextGuess, checkWord(actualAnswer, nextGuess)), possibleWords))
+            #wordsRemaining += sum([pool.apply(wordIsAllowed(x, nextGuess, checkWord(actualAnswer, nextGuess)) for x in possibleWords)])
+            #pool.close()
+        if wordsRemaining < minRemaining:
+            minRemaining = wordsRemaining
+            bestNextGuess = nextGuess
+    return bestNextGuess
 
 def checkWord(answer, guess):
     result = ['','','','','']
     for i in range(5):
+#        print(guess, answer, i)
         if answer[i] == guess[i]:
-            result[i] = 'correct'
+            result[i] = CORRECT
             continue
-        if guess[i] in answer[i]:
-            if guess.count(i) > 1:
+        if guess[i] in answer:
+            if guess.count(guess[i]) > 1:
                 if guess.find(guess[i]) < i:
-                    result[i] = 'absent'
+                    result[i] = ABSENT
+                    continue
+                else:
+                    result[i] = PRESENT
                     continue
             else:
-                result[i] = 'present'
+                result[i] = PRESENT
                 continue
-        result[i] = 'absent'
+        result[i] = ABSENT
     return result
 
 def wordIsAllowed(targetWord, guess, guessResult):
     for i in range(5):
         guessLetter = guess[i]
         guessLetterStatus = guessResult[i]
-        if guessLetterStatus == "correct" and targetWord[i] != guessLetter:
+        if guessLetterStatus == CORRECT and targetWord[i] != guessLetter:
             return False
-        if guessLetterStatus == "absent" and guessLetter in targetWord:
+        if guessLetterStatus == ABSENT and guessLetter in targetWord:
             # need to check if the letter is also elsewhere in the guess and present or correct
             if guess.count(guessLetter) > 1:
                 letterPositions = [i for i, letter in enumerate(guess) if letter == guessLetter]
                 letterResults = [guessResult[i] for i in letterPositions]
-                if (letterResults.count("correct") + letterResults.count("present")) > 0:
+                if (letterResults.count(CORRECT) + letterResults.count(PRESENT)) > 0:
                     pass
                 else:
                     return False
             else:
                  return False
-        if guessLetterStatus == "present" and not(guessLetter in targetWord):
+        if guessLetterStatus == PRESENT and not(guessLetter in targetWord):
             return False
-        if guessLetterStatus == "present" and targetWord[i] == guessLetter:
+        if guessLetterStatus == PRESENT and targetWord[i] == guessLetter:
             return False
     return True
 
