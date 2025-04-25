@@ -38,12 +38,14 @@ class WordleController:
         assert "Wordle" in self.driver.title
         element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "fides-accept-all-button")))
         self.driver.find_element(By.CLASS_NAME, "fides-accept-all-button").click()
+        element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "purr-blocker-card__button")))
+        self.driver.find_element(By.CLASS_NAME, "purr-blocker-card__button").click()
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='Play']")))
         self.driver.find_element(By.CSS_SELECTOR, "[data-testid='Play']").click()
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-label='Close']")))
         self.driver.find_element(By.CSS_SELECTOR, "[aria-label='Close']").click()
         time.sleep(1)
-        #self.gameAppContents = self.driver.find_element(By.TAG_NAME, "game-app").shadow_root
+        #self.gameAppContents = self.driver.find_element(By.ID, "wordle-app-game")
         #self.keyboardContent = self.gameAppContents.find_element(By.TAG_NAME, "game-keyboard").shadow_root
         #gameModalContents = self.gameAppContents.find_element(By.TAG_NAME, "game-modal").shadow_root
         #gameIcon = gameModalContents.find_element(By.TAG_NAME, "game-icon")
@@ -95,14 +97,17 @@ class WordleController:
             button = self.keyboardContent.find_element(By.CSS_SELECTOR, buttonName)
         button.click()
 
-    def getCurrentStatus(self):
+    def getCurrentStatusOLD(self):
         themeManager = self.gameAppContents.find_element(By.TAG_NAME, "game-theme-manager")
         allRows = themeManager.find_elements(By.TAG_NAME, "game-row")
         thisRowRoot = allRows[self.currentRow].shadow_root
         thisRowTiles = thisRowRoot.find_elements(By.TAG_NAME, "game-tile")
         status = [tile.get_attribute("evaluation")[0] for tile in thisRowTiles]
         return status
-
+    def getCurrentStatus(self):
+        thisRow = self.driver.find_element(By.CSS_SELECTOR, f"[aria-label='Row {self.currentRow+1}']")
+        status = [tile.get_attribute("data-state")[0] for tile in thisRow.find_elements(By.CSS_SELECTOR, "[class^='Tile-module_tile']") ]
+        return status
     def test(self):
         self.currentWord = 'colon'
         self.currentWordStatus = [ABSENT, PRESENT, ABSENT, ABSENT, ABSENT]
